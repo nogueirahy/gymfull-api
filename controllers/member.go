@@ -11,10 +11,24 @@ import (
 
 func ShowAllMembers(c echo.Context) error {
 	db := database.GetDatabase()
+	q := c.QueryParams()
+
+	page, _ := strconv.Atoi(q.Get("page"))
+	if page == 0 {
+		page = 1
+	}
+
+	pageSize, _ := strconv.Atoi(q.Get("page_size"))
+	switch {
+	case pageSize > 100:
+		pageSize = 100
+	}
+
+	offset := (page - 1) * pageSize
 
 	m := new([]models.Member)
 
-	err := db.Find(&m).Error
+	err := db.Offset(offset).Limit(pageSize).Find(&m).Error
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, "error "+err.Error())
